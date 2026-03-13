@@ -1,12 +1,14 @@
 import React from "react"
-import { useAuth } from "../context/AuthContext"
+import { useRole } from "../context/AuthContext"
+import { useClerk } from "@clerk/react"
 import { useNavigate } from "react-router-dom"
 
 export default function Navbar({ title }) {
-  const { user, logout } = useAuth()
+  const { name, role } = useRole()
+  const { signOut } = useClerk()
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate("/") }
+  const handleLogout = () => signOut(() => navigate("/"))
 
   return (
     <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
@@ -21,11 +23,11 @@ export default function Navbar({ title }) {
       </div>
       <div className="flex items-center gap-4">
         <div className="text-right hidden sm:block">
-          <p className="text-sm font-medium text-gray-800">{user?.name}</p>
-          <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+          <p className="text-sm font-medium text-gray-800">{name}</p>
+          <p className="text-xs text-gray-400 capitalize">{role}</p>
         </div>
         <div className="w-8 h-8 bg-clinic-100 rounded-full flex items-center justify-center text-clinic-700 font-semibold text-sm">
-          {user?.name?.[0]?.toUpperCase()}
+          {name?.[0]?.toUpperCase()}
         </div>
         <button onClick={handleLogout} className="text-sm text-gray-400 hover:text-gray-700 transition-colors">
           Sign out

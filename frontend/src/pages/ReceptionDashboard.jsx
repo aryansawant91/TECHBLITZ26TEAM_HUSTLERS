@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react"
 import Navbar from "../components/Navbar"
 import AppointmentCard from "../components/AppointmentCard"
 import BookingModal from "../components/BookingModal"
-import api from "../services/api"
-import { useAuth } from "../context/AuthContext"
+import { useApi } from "../services/useApi.js"
+import { useRole } from "../context/AuthContext"
 
 export default function ReceptionDashboard() {
   const [appointments, setAppointments] = useState([])
@@ -13,11 +13,13 @@ export default function ReceptionDashboard() {
   const [rescheduleAppt, setRescheduleAppt] = useState(null)
   const [filter, setFilter] = useState({ date: "", status: "", doctor_id: "" })
   const [loading, setLoading] = useState(true)
-  const { user } = useAuth()
+  const { name } = useRole()
+  const { getApi } = useApi()
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      const api = await getApi()
       const params = new URLSearchParams()
       if (filter.date) params.set("date", filter.date)
       if (filter.status) params.set("status", filter.status)
@@ -28,8 +30,6 @@ export default function ReceptionDashboard() {
       ])
       setAppointments(apptRes.data)
       setDoctors(docRes.data)
-
-      // Aggregate stats
       const all = apptRes.data
       setStats({
         total: all.length,
@@ -56,12 +56,10 @@ export default function ReceptionDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar title="Reception" />
-
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-serif text-2xl text-gray-900">Good morning, {user?.name?.split(" ")[0]}</h1>
+            <h1 className="font-serif text-2xl text-gray-900">Good morning, {name?.split(" ")[0]}</h1>
             <p className="text-gray-500 text-sm mt-0.5">{new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
           </div>
           <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2 text-sm">
@@ -72,7 +70,6 @@ export default function ReceptionDashboard() {
           </button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map(s => (
             <div key={s.label} className="card p-5">
@@ -82,7 +79,6 @@ export default function ReceptionDashboard() {
           ))}
         </div>
 
-        {/* Filters */}
         <div className="card p-4 mb-6">
           <div className="flex flex-wrap gap-3">
             <input type="date" className="input-field w-auto text-sm"
@@ -109,7 +105,6 @@ export default function ReceptionDashboard() {
           </div>
         </div>
 
-        {/* Appointments grid */}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
             <svg className="animate-spin w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
@@ -130,7 +125,7 @@ export default function ReceptionDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {appointments.map(a => (
               <div key={a._id} className="group relative">
-                <AppointmentCard appt={a} onRefresh={load} />
+                <AppointmentCard appt={a} onRefresh={load} getApi={getApi} />
                 {a.status === "booked" && (
                   <button onClick={() => { setRescheduleAppt(a); setShowModal(true) }}
                     className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-xs text-gray-500 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-all">

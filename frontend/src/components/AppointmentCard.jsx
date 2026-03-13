@@ -1,19 +1,28 @@
 import React from "react"
-import api from "../services/api"
 
 const statusClass = { booked: "badge-booked", completed: "badge-completed", cancelled: "badge-cancelled", no_show: "badge-no_show" }
 const statusLabel = { booked: "Booked", completed: "Completed", cancelled: "Cancelled", no_show: "No show" }
 
-export default function AppointmentCard({ appt, onRefresh, showActions = true }) {
+export default function AppointmentCard({ appt, onRefresh, showActions = true, getApi }) {
   const cancel = async () => {
     if (!confirm(`Cancel appointment for ${appt.patient_name}?`)) return
-    await api.delete(`/appointments/${appt._id}`)
-    onRefresh?.()
+    try {
+      const api = await getApi()
+      await api.delete(`/appointments/${appt._id}`)
+      onRefresh?.()
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to cancel appointment")
+    }
   }
 
   const complete = async () => {
-    await api.put(`/appointments/${appt._id}/status`, { status: "completed" })
-    onRefresh?.()
+    try {
+      const api = await getApi()
+      await api.put(`/appointments/${appt._id}/status`, { status: "completed" })
+      onRefresh?.()
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to mark complete")
+    }
   }
 
   return (
